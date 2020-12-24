@@ -29,8 +29,8 @@ jobs:
           sleep 10 &&
           curl http://localhost:8080
         env:
-          DOUBLE_END: ${{ Boolean(matrix.double-end)  }}
-          COMPRESSION: ${{ Boolean(matrix.compression) }}
+          DOUBLE_END: ${{ matrix.double-end != '' }}
+          COMPRESSION: ${{ matrix.compression != '' }}
 
       - name: Redirect to a small page
         run: |
