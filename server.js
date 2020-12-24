@@ -25,31 +25,39 @@ http
 
     switch (url.pathname) {
       case "/redirect": {
-        const writeEmptyBody =
-          url.searchParams.get("writeEmptyBody") === "true";
+        const addEmptyBody = url.searchParams.get("addEmptyBody");
         const endTwice = url.searchParams.get("endTwice") === "true";
-        const contentType = url.searchParams.get("contentType");
+        const contentMode = url.searchParams.get("contentMode");
 
         res.writeHead(302, {
-          Location: `/content?type=${contentType}`,
+          Location: `/content?mode=${contentMode}`,
         });
 
-        if (writeEmptyBody) {
+        if (addEmptyBody === "viaWriteCall") {
           res.write("");
         }
 
-        res.end();
+        res.end(
+          ["viaEndCall", "viaBothEndCalls"].includes(addEmptyBody)
+            ? ""
+            : undefined
+        );
+
         if (endTwice) {
-          res.end();
+          res.end(
+            ["viaSecondEndCall", "viaBothEndCalls"].includes(addEmptyBody)
+              ? ""
+              : undefined
+          );
         }
 
         return;
       }
 
       case "/content": {
-        const type = url.searchParams.get("type");
+        const mode = url.searchParams.get("mode");
 
-        if (type === "withDrain") {
+        if (mode === "withDrain") {
           res.writeHead(200, {
             "Content-Type": "text/plain",
             "Transfer-Encoding": "chunked",

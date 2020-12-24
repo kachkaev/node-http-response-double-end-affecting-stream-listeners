@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   test:
+    name: ""
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -40,47 +41,65 @@ jobs:
         if: always()
         shell: bash
         run: |
-          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/content
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/content'
 
       - name: "content (with drain)"
         if: always()
         shell: bash
         run: |
-          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/content\?type\=withDrain
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/content?mode=withDrain'
 
       - name: "redirect → content (no drain)"
         if: always()
         shell: bash
         run: |
-          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/redirect'
 
       - name: "redirect → content (with drain)"
         if: always()
         shell: bash
         run: |
-          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect\?contentType\=withDrain
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/redirect?contentMode=withDrain'
 
       - name: "redirect (end twice) → content (no drain)"
         if: always()
         shell: bash
         run: |
-          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect\?endTwice\=true
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/redirect?endTwice=true'
 
       - name: "redirect (end twice) → content (with drain)"
         if: always()
         shell: bash
         run: |
-          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect\?endTwice\=true\&contentType\=withDrain
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/redirect?contentMode=withDrain&endTwice=true'
 
-      - name: "redirect (end twice) → content (with drain) [new TCP connection]"
+      - name: "redirect (end twice); new TCP connection: content (with drain)"
         if: always()
         shell: bash
         run: |
-          curl --dump-header - --max-time 10 --output /dev/null http://localhost:8080/redirect\?endTwice\=true
-          curl --dump-header - --max-time 10 --output /dev/null http://localhost:8080/content\?type\=withDrain
+          curl --dump-header - --max-time 10 --output /dev/null 'http://localhost:8080/redirect?endTwice=true'
+          curl --dump-header - --max-time 10 --output /dev/null 'http://localhost:8080/content?mode=withDrain'
 
-      - name: "redirect (write empty body, end twice) → content (with drain)"
+      - name: "redirect (end twice + empty body via end call) → content (with drain)"
         if: always()
         shell: bash
         run: |
-          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect\?writeEmptyBody\=true\&endTwice\=true\&contentType\=withDrain
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/redirect?contentMode=withDrain&endTwice=true&addEmptyBody=viaEndCall'
+
+      - name: "redirect (end twice + empty body via second end call) → content (with drain)"
+        if: always()
+        shell: bash
+        run: |
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/redirect?contentMode=withDrain&endTwice=true&addEmptyBody=viaSecondEndCall'
+
+      - name: "redirect (end twice + empty body via both end calls) → content (with drain)"
+        if: always()
+        shell: bash
+        run: |
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/redirect?contentMode=withDrain&endTwice=true&addEmptyBody=viaBothEndCalls'
+
+      - name: "redirect (end twice + empty body via write call) → content (with drain)"
+        if: always()
+        shell: bash
+        run: |
+          curl --dump-header - --max-time 10 --output /dev/null --location 'http://localhost:8080/redirect?contentMode=withDrain&endTwice=true&addEmptyBody=viaWriteCall'
