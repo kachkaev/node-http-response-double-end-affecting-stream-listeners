@@ -10,25 +10,17 @@ jobs:
       matrix:
         os: [macos-11.0, ubuntu-20.04, windows-2019]
         node-version: ["14.15.3", "15.5.0"]
-        double-end: ["", "res.end() ×2"]
-        compression: ["", "+compression"]
         include:
           - os: ubuntu-latest
             node-version: 10.23.0
-            double-end: res.end() ×2
-            compression: +compression
           - os: ubuntu-latest
             node-version: 12.20.0
-            double-end: res.end() ×2
-            compression: +compression
           - os: ubuntu-latest
             node-version: 13.14.0
-            double-end: res.end() ×2
-            compression: +compression
           - os: ubuntu-latest
             node-version: 14.0.0
-            double-end: res.end() ×2
-            compression: +compression
+          - os: ubuntu-latest
+            node-version: 15.0.0
     steps:
       - uses: actions/checkout@v2
 
@@ -37,55 +29,58 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: install dependencies
-        run: npm install
-
       - name: start server
         shell: bash
         run: |
           node ./server.js &
           sleep 10 &&
           curl http://localhost:8080
-        env:
-          DOUBLE_END: ${{ matrix.double-end != '' }}
-          COMPRESSION: ${{ matrix.compression != '' }}
 
-      - name: Redirect to a small page
+      - name: "content (no drain)"
         if: always()
         shell: bash
         run: |
-          curl \
-            --dump-header - \
-            --header "Accept-Encoding: gzip" \
-            --location \
-            --max-time 10 \
-            --output /dev/null \
-            http://localhost:8080/redirect\?toSize\=1000
+          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/content
 
-      - name: Redirect to a heavy page
+      - name: "content (with drain)"
         if: always()
         shell: bash
         run: |
-          curl \
-            --dump-header - \
-            --header "Accept-Encoding: gzip" \
-            --location \
-            --max-time 10 \
-            --output /dev/null \
-            http://localhost:8080/redirect\?toSize\=100000
+          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/content\?type\=withDrain
 
-      - name: Redirect to a heavy page (new TCP connection)
+      - name: "redirect → content (no drain)"
         if: always()
         shell: bash
         run: |
-          curl \
-            --dump-header - \
-            --header "Accept-Encoding: gzip" \
-            --output /dev/null \
-            http://localhost:8080/redirect\?toSize\=100000
-          curl \
-            --dump-header - \
-            --header "Accept-Encoding: gzip" \
-            --max-time 10 \
-            --output /dev/null \
-            http://localhost:8080/content\?size\=100000
+          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect
+
+      - name: "redirect → content (with drain)"
+        if: always()
+        shell: bash
+        run: |
+          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect\?contentType\=withDrain
+
+      - name: "redirect (end twice) → content (no drain)"
+        if: always()
+        shell: bash
+        run: |
+          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect\?endTwice\=true
+
+      - name: "redirect (end twice) → content (with drain)"
+        if: always()
+        shell: bash
+        run: |
+          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect\?endTwice\=true\&contentType\=withDrain
+
+      - name: "redirect (end twice) → content (with drain) [new TCP connection]"
+        if: always()
+        shell: bash
+        run: |
+          curl --dump-header - --max-time 10 --output /dev/null http://localhost:8080/redirect\?endTwice\=true
+          curl --dump-header - --max-time 10 --output /dev/null http://localhost:8080/content\?type\=withDrain
+
+      - name: "redirect (write empty body, end twice) → content (with drain)"
+        if: always()
+        shell: bash
+        run: |
+          curl --dump-header - --max-time 10 --output /dev/null --location http://localhost:8080/redirect\?writeEmptyBody\=true\&endTwice\=true\&contentType\=withDrain
