@@ -51,6 +51,7 @@ jobs:
           COMPRESSION: ${{ matrix.compression != '' }}
 
       - name: Redirect to a small page
+        if: always()
         shell: bash
         run: |
           curl \
@@ -61,7 +62,8 @@ jobs:
             --output /dev/null \
             http://localhost:8080/redirect\?toSize\=1000
 
-      - name: Redirect to a bigger page
+      - name: Redirect to a heavy page
+        if: always()
         shell: bash
         run: |
           curl \
@@ -71,3 +73,19 @@ jobs:
             --max-time 10 \
             --output /dev/null \
             http://localhost:8080/redirect\?toSize\=100000
+
+      - name: Redirect to a heavy page (new TCP connection)
+        if: always()
+        shell: bash
+        run: |
+          curl \
+            --dump-header - \
+            --header "Accept-Encoding: gzip" \
+            --output /dev/null \
+            http://localhost:8080/redirect\?toSize\=100000
+          curl \
+            --dump-header - \
+            --header "Accept-Encoding: gzip" \
+            --max-time 10 \
+            --output /dev/null \
+            http://localhost:8080/content\?size\=100000
