@@ -1,0 +1,41 @@
+name: Node.js CI
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        node-version: [12, 14]
+        double-end: [false, true]
+        compression: [false, true]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: install dependencies
+        run: npm install
+
+      - name: start server
+        run: |
+          node ./server.js &
+          sleep 10 &&
+          curl http://localhost:8080
+        env:
+          DOUBLE_END: ${{ matrix.double-end }}
+          COMPRESSION: ${{ matrix.compression }}
+
+      - name: Redirect to a small page
+        run: |
+          curl -H "Accept-Encoding: gzip" http://localhost:8080/redirect?toSize=1000
+
+      - name: Redirect to a bigger page
+        run: |
+          curl -H "Accept-Encoding: gzip" http://localhost:8080/redirect?toSize=100000
