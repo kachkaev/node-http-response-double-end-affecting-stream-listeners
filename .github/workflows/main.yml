@@ -14,6 +14,10 @@ jobs:
         compression: ["", "+compression"]
         include:
           - os: ubuntu-latest
+            node-version: 10.23.0
+            double-end: res.end() ×2
+            compression: +compression
+          - os: ubuntu-latest
             node-version: 12.20.0
             double-end: res.end() ×2
             compression: +compression
@@ -46,6 +50,7 @@ jobs:
           COMPRESSION: ${{ matrix.compression != '' }}
 
       - name: Redirect to a small page
+        shell: bash
         run: |
           curl \
             --dump-header - \
@@ -56,6 +61,7 @@ jobs:
             http://localhost:8080/redirect\?toSize\=1000
 
       - name: Redirect to a bigger page
+        shell: bash
         run: |
           curl \
             --dump-header - \
