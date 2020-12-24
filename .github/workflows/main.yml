@@ -8,10 +8,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest] # [macos-latest, ubuntu-latest, windows-latest]
         node-version: [12, 14]
-        double-end: [false, true]
-        compression: [false, true]
+        double-end: ["", "res.end() ×2"]
+        compression: ["", "+compression"]
     steps:
       - uses: actions/checkout@v2
 
@@ -29,13 +29,25 @@ jobs:
           sleep 10 &&
           curl http://localhost:8080
         env:
-          DOUBLE_END: ${{ matrix.double-end }}
-          COMPRESSION: ${{ matrix.compression }}
+          DOUBLE_END: ${{ Boolean(matrix.double-end)  }}
+          COMPRESSION: ${{ Boolean(matrix.compression) }}
 
       - name: Redirect to a small page
         run: |
-          curl -H "Accept-Encoding: gzip" http://localhost:8080/redirect?toSize=1000
+          curl \
+            --dump-header - \
+            --header "Accept-Encoding: gzip" \
+            --location \
+            --max-time 10 \
+            --output /dev/null \
+            http://localhost:8080/redirect\?toSize\=1000
 
       - name: Redirect to a bigger page
         run: |
-          curl -H "Accept-Encoding: gzip" http://localhost:8080/redirect?toSize=100000
+          curl \
+            --dump-header - \
+            --header "Accept-Encoding: gzip" \
+            --location \
+            --max-time 10 \
+            --output /dev/null \
+            http://localhost:8080/redirect\?toSize\=100000
