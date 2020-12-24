@@ -41,6 +41,7 @@ jobs:
         run: npm install
 
       - name: start server
+        shell: bash
         run: |
           node ./server.js &
           sleep 10 &&
